@@ -1,0 +1,5 @@
+<resources>
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="settings_row_padding">64dp</dimen>
+    <dimen name="custom_preference_title_text_size">16sp</dimen>
+</resources>

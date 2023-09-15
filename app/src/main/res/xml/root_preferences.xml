@@ -1,0 +1,15 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="General">
+        <SwitchPreferenceCompat
+            app:key="alarm_on"
+            app:title="Turn on alert"
+            app:defaultValue="true" />
+
+        <us.groundstate.sfsweepalert.TimePickerPreference
+            app:layout="@layout/time_picker_row"
+            app:selectable="true"
+            app:iconSpaceReserved="true" />
+
+    </PreferenceCategory>
+</PreferenceScreen>
