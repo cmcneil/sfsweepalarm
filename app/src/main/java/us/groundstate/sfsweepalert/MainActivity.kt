@@ -3,12 +3,8 @@ package us.groundstate.sfsweepalert
 
 import android.Manifest
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.location.Location
 import android.os.Bundle
 import android.os.SystemClock
 import android.util.Log
@@ -16,7 +12,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Observer
@@ -24,9 +19,6 @@ import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
-import androidx.preference.PreferenceManager
-import us.groundstate.sfsweepalert.R
-import us.groundstate.sfsweepalert.LocationRepository
 import us.groundstate.sfsweepalert.databinding.ActivityMainBinding
 import com.google.android.gms.common.internal.safeparcel.SafeParcelableSerializer
 import com.google.android.gms.location.ActivityRecognition
@@ -35,12 +27,9 @@ import com.google.android.gms.location.ActivityTransitionEvent
 import com.google.android.gms.location.ActivityTransitionRequest
 import com.google.android.gms.location.ActivityTransitionResult
 import com.google.android.gms.location.DetectedActivity
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
 import dagger.hilt.android.AndroidEntryPoint
+import us.groundstate.sfsweepalert.background.LocationRepository
+import us.groundstate.sfsweepalert.background.TransitionsReceiver
 import javax.inject.Inject
 
 private const val TRANSITION_PENDING_INTENT_REQUEST_CODE = 200
@@ -107,14 +96,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             requestPermission()
         }
-
-//        LocationHelper.restoreLocation(this)
-//        val locObserver = Observer<Location> { newLoc: Location ->
-////            val latlng = LatLng(newLoc.latitude, newLoc.longitude)
-//            Log.d("MainActivityLocationUpdated",
-//                "Location updated: " + newLoc.toString())
-//        }
-//        LocationRepository.carLocation.observe(this, locObserver)
 
         val currentActivityTV = findViewById<TextView>(R.id.current_activity_status)
         currentActivityTV.text = (getString(R.string.current_activity_preamble))

@@ -68,7 +68,7 @@
     <string name="transition_update_request_success">Transition update request success</string>
     <string name="transition_update_request_failed">Transition update request failure</string>
 
-    <string name="current_activity_preamble">Current Activity: </string>
+    <string name="current_activity_preamble">Time Parked:&#160;</string>
 
     <string name="alert_hour_name">Alert Hour</string>
     <string name="alert_hour_description">Tap to change time of alert.</string>

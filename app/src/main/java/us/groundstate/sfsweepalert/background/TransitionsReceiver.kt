@@ -1,4 +1,4 @@
-package us.groundstate.sfsweepalert
+package us.groundstate.sfsweepalert.background
 
 import android.Manifest
 import android.app.AlarmManager
@@ -61,7 +61,7 @@ class TransitionsReceiver: BroadcastReceiver() {
         val pi = PendingIntent.getBroadcast(context, 0, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         am!!.cancel(pi)
-        am!!.set(AlarmManager.RTC_WAKEUP, targetCal.timeInMillis, pi)
+        am.set(AlarmManager.RTC_WAKEUP, targetCal.timeInMillis, pi)
     }
 
     private fun updateLocation(context: Context) {

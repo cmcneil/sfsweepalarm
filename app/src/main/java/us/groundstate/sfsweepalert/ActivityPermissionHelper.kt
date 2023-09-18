@@ -78,5 +78,4 @@ private fun startAppSettings(context: Context) {
     intent.data = uri
     context.startActivity(intent)
 }
-class ActivityPermissionHelper {
-}
+class ActivityPermissionHelper

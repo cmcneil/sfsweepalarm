@@ -6,7 +6,7 @@
             app:title="Turn on alert"
             app:defaultValue="true" />
 
-        <us.groundstate.sfsweepalert.TimePickerPreference
+        <us.groundstate.sfsweepalert.settings.TimePickerPreference
             app:layout="@layout/time_picker_row"
             app:selectable="true"
             app:iconSpaceReserved="true" />

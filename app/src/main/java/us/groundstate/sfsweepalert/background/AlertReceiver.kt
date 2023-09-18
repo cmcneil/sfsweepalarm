@@ -1,4 +1,4 @@
-package us.groundstate.sfsweepalert
+package us.groundstate.sfsweepalert.background
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -6,8 +6,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat.getString
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.preference.PreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
 import us.groundstate.sfsweepalert.R

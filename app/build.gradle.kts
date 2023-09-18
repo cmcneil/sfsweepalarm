@@ -51,6 +51,8 @@ dependencies {
     implementation("com.google.android.gms:play-services-maps:18.1.0")
     implementation("com.google.firebase:firebase-analytics-ktx")
     implementation(platform("com.google.firebase:firebase-bom:32.2.3"))
+    implementation("com.google.firebase:firebase-firestore-ktx:24.8.1")
+    implementation("com.firebase:geofire-android-common:3.2.0")
     implementation("com.google.maps.android:maps-utils-ktx:3.4.0")
     implementation("com.google.android.material:material:1.8.0")
     implementation("com.google.android.libraries.mapsplatform.secrets-gradle-plugin:secrets-gradle-plugin:2.0.1")

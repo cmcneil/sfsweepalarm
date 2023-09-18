@@ -1,4 +1,4 @@
-package us.groundstate.sfsweepalert
+package us.groundstate.sfsweepalert.maps
 
 import android.location.Location
 import androidx.fragment.app.Fragment
@@ -7,8 +7,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 import us.groundstate.sfsweepalert.R
 
 
@@ -20,6 +20,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import dagger.hilt.android.AndroidEntryPoint
+import us.groundstate.sfsweepalert.background.LocationRepository
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -27,6 +28,10 @@ class MapsFragment : Fragment() {
 
     @Inject
     lateinit var locationRepository: LocationRepository
+
+    @Inject
+    lateinit var geoClient: SFGeoClient
+    private val viewModel by viewModels<MapsViewModel>()
 
 //    private val viewModel: SweepAlertViewModel by viewModels()
 //    private lateinit var viewModel: MapsFragmentViewModel
@@ -51,7 +56,7 @@ class MapsFragment : Fragment() {
             googleMap.moveCamera(CameraUpdateFactory.newLatLng(initLatlng))
         }
 
-        val mapObserver = Observer<Location> { newLoc: Location ->
+        val targetLocObserver = Observer<Location> { newLoc: Location ->
             val latlng = LatLng(newLoc.latitude, newLoc.longitude)
             marker?.remove()
             marker = googleMap.addMarker(MarkerOptions().position(latlng).title("Car Location"))
@@ -60,8 +65,10 @@ class MapsFragment : Fragment() {
                 .target(latlng)
                 .build()
             googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(camPosition))
+            viewModel.refreshMapsSweepLines(googleMap, latlng)
+//            geoClient.addSweepData(latlng, googleMap)
         }
-        locationRepository.carLocation.observe(this, mapObserver)
+        locationRepository.carLocation.observe(this, targetLocObserver)
     }
 
     override fun onCreateView(

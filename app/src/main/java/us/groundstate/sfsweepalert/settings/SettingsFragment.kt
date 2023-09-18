@@ -1,4 +1,4 @@
-package us.groundstate.sfsweepalert
+package us.groundstate.sfsweepalert.settings
 
 import android.os.Bundle
 import androidx.preference.PreferenceFragmentCompat

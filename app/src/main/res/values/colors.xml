@@ -2,4 +2,9 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="sweep_ok_green">#FF7CE577</color>
+    <color name="sweep_bad_red">#FFFF5A5F</color>
+    <color name="coolers_blue">#FF8DE4FF</color>
+    <color name="coolers_indigo">#FF7F7EFF</color>
+    <color name="coolers_teal">#FF048A81</color>
 </resources>

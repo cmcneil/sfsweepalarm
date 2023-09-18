@@ -1,11 +1,10 @@
-package us.groundstate.sfsweepalert
+package us.groundstate.sfsweepalert.background
 
 import android.content.Context
 import android.content.SharedPreferences
 import android.location.Location
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
 import androidx.preference.PreferenceManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -21,7 +20,7 @@ interface LocationRepository {
 }
 
 @Singleton
-class LocationRepositoryImpl: LocationRepository{
+class LocationRepositoryImpl: LocationRepository {
     private lateinit var appContext: Context
     private lateinit var sharedPreferences: SharedPreferences
     private val mutableCurrentActivity = MutableLiveData<String>()

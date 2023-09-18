@@ -1,5 +1,6 @@
-package us.groundstate.sfsweepalert
+package us.groundstate.sfsweepalert.settings
 
+//import com.example.sfsweepalert.databinding.TimePickerRowBinding
 import android.content.Context
 import android.content.SharedPreferences
 import android.text.format.DateFormat.is24HourFormat
@@ -8,10 +9,10 @@ import android.view.View
 import androidx.preference.Preference
 import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceViewHolder
-import us.groundstate.sfsweepalert.R
-//import com.example.sfsweepalert.databinding.TimePickerRowBinding
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
+import us.groundstate.sfsweepalert.MainActivity
+import us.groundstate.sfsweepalert.R
 import us.groundstate.sfsweepalert.databinding.TimePickerRowBinding
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter

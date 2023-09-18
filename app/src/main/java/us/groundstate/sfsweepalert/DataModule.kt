@@ -1,11 +1,13 @@
 package us.groundstate.sfsweepalert
 
-import android.content.BroadcastReceiver
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
-import dagger.hilt.android.components.ViewModelComponent
 import dagger.hilt.components.SingletonComponent
+import us.groundstate.sfsweepalert.background.LocationRepository
+import us.groundstate.sfsweepalert.background.LocationRepositoryImpl
+import us.groundstate.sfsweepalert.maps.SFGeoClient
+import us.groundstate.sfsweepalert.maps.SFGeoClientImpl
 import javax.inject.Singleton
 
 @Module
@@ -16,5 +18,11 @@ abstract class DataModule {
     abstract fun getLocationRepository(
         locationRepository: LocationRepositoryImpl
     ): LocationRepository
+
+    @Singleton
+    @Binds
+    abstract fun getGeoClient(
+        geoClient: SFGeoClientImpl
+    ): SFGeoClient
 
 }

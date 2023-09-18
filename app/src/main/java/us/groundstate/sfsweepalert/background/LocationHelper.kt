@@ -1,10 +1,8 @@
-package us.groundstate.sfsweepalert
+package us.groundstate.sfsweepalert.background
 
-import android.content.Context
 import android.content.SharedPreferences
 import android.location.Location
 import android.location.LocationManager
-import androidx.preference.PreferenceManager
 
 object LocationHelper {
     fun saveLocation(sharedPreferences: SharedPreferences, loc: Location) {
