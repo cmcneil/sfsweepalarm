@@ -5,6 +5,10 @@
             app:key="alarm_on"
             app:title="Turn on alert"
             app:defaultValue="true" />
+        <SwitchPreferenceCompat
+            app:key="tracking_on"
+            app:title="Automatically Track Parking"
+            app:defaultValue="true" />
 
         <us.groundstate.sfsweepalert.settings.TimePickerPreference
             app:layout="@layout/time_picker_row"

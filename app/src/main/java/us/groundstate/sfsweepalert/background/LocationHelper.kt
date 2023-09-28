@@ -1,11 +1,10 @@
 package us.groundstate.sfsweepalert.background
 
 import android.content.SharedPreferences
-import android.location.Location
-import android.location.LocationManager
+import com.google.android.gms.maps.model.LatLng
 
 object LocationHelper {
-    fun saveLocation(sharedPreferences: SharedPreferences, loc: Location) {
+    fun saveLocation(sharedPreferences: SharedPreferences, loc: LatLng) {
         val lat = loc.latitude
         val lng = loc.longitude
         val editor = sharedPreferences.edit()
@@ -14,15 +13,11 @@ object LocationHelper {
         editor.apply()
     }
 
-    fun restoreLocation(sharedPreferences: SharedPreferences): Location{
+    fun restoreLocation(sharedPreferences: SharedPreferences): LatLng {
         val defLat = -34.0
         val defLng = 151.0
         val lat = Double.fromBits(sharedPreferences.getLong("lat", defLat.toRawBits()))
         val lng = Double.fromBits(sharedPreferences.getLong("lng", defLng.toRawBits()))
-        val restoredLoc = Location(LocationManager.GPS_PROVIDER).apply {
-            latitude = lat
-            longitude = lng
-        }
-        return restoredLoc
+        return LatLng(lat, lng)
     }
 }

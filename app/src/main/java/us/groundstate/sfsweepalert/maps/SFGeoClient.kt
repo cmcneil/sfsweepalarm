@@ -1,5 +1,6 @@
 package us.groundstate.sfsweepalert.maps
 
+import android.os.Debug
 import android.util.Log
 import com.firebase.geofire.GeoFireUtils
 import com.firebase.geofire.GeoLocation
@@ -17,12 +18,15 @@ import javax.inject.Singleton
 interface SFGeoClient {
     fun addSweepData(latlng: LatLng, googleMap: GoogleMap,
                      callback: (Map<String, List<Pair<Int, DocumentSnapshot>>>) -> Unit)
+    fun findClosest(latLng: LatLng, googleMap: GoogleMap,
+                    callback: (DocumentSnapshot?) -> Unit)
 }
 
 @Singleton
 class SFGeoClientImpl: SFGeoClient {
     val db = Firebase.firestore
-    val radius = 500.0 // meters
+    val radius = 350.0 // meters
+    val closeRadius = 50.0 // meters
     @Inject
     constructor()
 
@@ -44,6 +48,7 @@ class SFGeoClientImpl: SFGeoClient {
 
         val doneTask = Tasks.whenAllComplete(tasks)
             .addOnCompleteListener {
+//                Debug.startMethodTracing("query_returned")
                 val matchingDocs: MutableList<DocumentSnapshot> = ArrayList()
                 for (task in tasks) {
                     val snap = task.result
@@ -61,8 +66,73 @@ class SFGeoClientImpl: SFGeoClient {
                 }
                 val sortedDocs = sortSegments(matchingDocs)
                 callback(sortedDocs)
+//                Debug.stopMethodTracing()
             }
     }
+
+    override fun findClosest(latLng: LatLng, googleMap: GoogleMap,
+                             callback: (DocumentSnapshot?) -> Unit) {
+        val center = GeoLocation(latLng.latitude, latLng.longitude)
+
+        val bounds = GeoFireUtils.getGeoHashQueryBounds(center, closeRadius)
+        val tasks: MutableList<Task<QuerySnapshot>> = ArrayList()
+        for (b in bounds) {
+            val q = db.collection("sweep_segments")
+                .orderBy("geohash")
+                .startAt(b.startHash)
+                .endAt(b.endHash)
+            tasks.add(q.get())
+        }
+
+        val doneTask = Tasks.whenAllComplete(tasks)
+            .addOnCompleteListener {
+                val matchingDocs: MutableList<DocumentSnapshot> = ArrayList()
+                val minDist: Double = closeRadius
+//                var closestDoc: Map<Int, DocumentSnapshot> = HashMap()
+                var closeCNN: Int? = null
+                val closestDocs = MutableList<DocumentSnapshot> = ArrayList()
+//                var lrClosestStreet: Pair<DocumentSnapshot?, DocumentSnapshot?> = Pair(null, null)
+                for (task in tasks) {
+                    val snap = task.result
+                    for (doc in snap!!.documents) {
+                        val lat = doc.getDouble("avg_lat")!!
+                        val lng = doc.getDouble("avg_lng")!!
+                        val cnn
+
+                        val avg_loc = GeoLocation(lat, lng)
+                        val distanceinM = GeoFireUtils.getDistanceBetween(avg_loc, center)
+                        if (distanceinM <= minDist) {
+                            if
+                            closestDoc = doc
+                        }
+                    }
+                }
+                callback(closestDoc)
+        }
+    }
+//
+//
+//        val doneTask = Tasks.whenAllComplete(tasks)
+//            .addOnCompleteListener {
+//                val matchingDocs: MutableList<DocumentSnapshot> = ArrayList()
+//                for (task in tasks) {
+//                    val snap = task.result
+//                    for (doc in snap!!.documents) {
+//                        val lat = doc.getDouble("avg_lat")!!
+//                        val lng = doc.getDouble("avg_lng")!!
+//
+//                        val avg_loc = GeoLocation(lat, lng)
+//                        val distanceinM = GeoFireUtils.getDistanceBetween(avg_loc, center)
+//                        if (distanceinM <= radius) {
+//                            matchingDocs.add(doc)
+//                        }
+//                    }
+//                }
+//                val sortedDocs = sortSegments(matchingDocs)
+//                callback(sortedDocs)
+//            }
+//
+//    }
 
     fun sortSegments(docs: MutableList<DocumentSnapshot>)
         : MutableMap<String, MutableList<Pair<Int, DocumentSnapshot>>> {

@@ -1,17 +1,13 @@
 package us.groundstate.sfsweepalert.maps
 
-import android.location.Location
-import androidx.fragment.app.Fragment
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
-import us.groundstate.sfsweepalert.R
-
-
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
@@ -20,14 +16,15 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import dagger.hilt.android.AndroidEntryPoint
-import us.groundstate.sfsweepalert.background.LocationRepository
+import us.groundstate.sfsweepalert.R
+import us.groundstate.sfsweepalert.background.ParkingRepository
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MapsFragment : Fragment() {
 
     @Inject
-    lateinit var locationRepository: LocationRepository
+    lateinit var parkingRepository: ParkingRepository
 
     @Inject
     lateinit var geoClient: SFGeoClient
@@ -47,28 +44,32 @@ class MapsFragment : Fragment() {
          * install it inside the SupportMapFragment. This method will only be triggered once the
          * user has installed Google Play services and returned to the app.
          */
-        val initLoc: Location? = locationRepository.carLocation.value
+        val initLoc: LatLng? = parkingRepository.carLocation.value
         if(initLoc != null) {
-            val initLatlng = LatLng(initLoc.latitude, initLoc.longitude)
             marker = googleMap.addMarker(
-                MarkerOptions().position(initLatlng).title("Car Location")
+                MarkerOptions().position(initLoc).title("Car Location")
             )
-            googleMap.moveCamera(CameraUpdateFactory.newLatLng(initLatlng))
+            googleMap.moveCamera(CameraUpdateFactory.newLatLng(initLoc))
         }
 
-        val targetLocObserver = Observer<Location> { newLoc: Location ->
-            val latlng = LatLng(newLoc.latitude, newLoc.longitude)
-            marker?.remove()
-            marker = googleMap.addMarker(MarkerOptions().position(latlng).title("Car Location"))
-            val camPosition = CameraPosition.Builder()
-                .zoom(15F)
-                .target(latlng)
-                .build()
-            googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(camPosition))
-            viewModel.refreshMapsSweepLines(googleMap, latlng)
-//            geoClient.addSweepData(latlng, googleMap)
+        val updateLoc: (LatLng) -> Unit = {latlng: LatLng ->
+//            Debug.startMethodTracing("sample")
+                marker?.remove()
+                marker = googleMap.addMarker(MarkerOptions().position(latlng).title("Car Location"))
+                val camPosition = CameraPosition.Builder()
+                    .zoom(16F)
+                    .target(latlng)
+                    .build()
+                googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(camPosition))
+                viewModel.refreshMapsSweepLines(googleMap, latlng)
+//            Debug.stopMethodTracing()
         }
-        locationRepository.carLocation.observe(this, targetLocObserver)
+
+        val targetLocObserver = Observer<LatLng>(updateLoc)
+        parkingRepository.carLocation.observe(this, targetLocObserver)
+        googleMap.setOnMapLongClickListener {newLoc: LatLng ->
+            parkingRepository.setCarLocation(newLoc)
+        }
     }
 
     override fun onCreateView(

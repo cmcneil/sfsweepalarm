@@ -2,16 +2,20 @@ package us.groundstate.sfsweepalert
 
 
 import android.Manifest
+import android.app.AlarmManager
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.SystemClock
+import android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Observer
@@ -19,7 +23,7 @@ import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
-import us.groundstate.sfsweepalert.databinding.ActivityMainBinding
+import androidx.preference.PreferenceManager
 import com.google.android.gms.common.internal.safeparcel.SafeParcelableSerializer
 import com.google.android.gms.location.ActivityRecognition
 import com.google.android.gms.location.ActivityTransition
@@ -28,47 +32,54 @@ import com.google.android.gms.location.ActivityTransitionRequest
 import com.google.android.gms.location.ActivityTransitionResult
 import com.google.android.gms.location.DetectedActivity
 import dagger.hilt.android.AndroidEntryPoint
-import us.groundstate.sfsweepalert.background.LocationRepository
 import us.groundstate.sfsweepalert.background.TransitionsReceiver
-import javax.inject.Inject
+import us.groundstate.sfsweepalert.databinding.ActivityMainBinding
+import java.util.Calendar
 
 private const val TRANSITION_PENDING_INTENT_REQUEST_CODE = 200
 const val TRANSITIONS_RECEIVER_ACTION = "us.groundstate.sfsweepalert_transitions_receiver_action"
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity() {
+class MainActivity: AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
-    private var activityTransitionList = mutableListOf<ActivityTransition>()
+    private var activityTransitionList = mutableListOf<ActivityTransition>(
+        ActivityTransition.Builder()
+            .setActivityType(DetectedActivity.IN_VEHICLE)
+            .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
+            .build()
+    )
     private var isTrackingStarted = false
 
-    @Inject
-    lateinit var locationRepository: LocationRepository
+//    @Inject
+//    internal lateinit var parkingRepository: ParkingRepository
 
-    init {
-        // List of activity transitions to track.
-        activityTransitionList += ActivityTransition.Builder()
-                .setActivityType(DetectedActivity.IN_VEHICLE)
-                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
-                .build()
-        activityTransitionList += ActivityTransition.Builder()
-            .setActivityType(DetectedActivity.WALKING)
-            .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
-            .build()
-        activityTransitionList += ActivityTransition.Builder()
-            .setActivityType(DetectedActivity.WALKING)
-            .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
-            .build()
-        activityTransitionList += ActivityTransition.Builder()
-            .setActivityType(DetectedActivity.STILL)
-            .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
-            .build()
-        activityTransitionList += ActivityTransition.Builder()
-            .setActivityType(DetectedActivity.STILL)
-            .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
-            .build()
-    }
+    private val viewModel by viewModels<MainViewModel>()
+
+//    init {
+//        // List of activity transitions to track.
+//        activityTransitionList += ActivityTransition.Builder()
+//                .setActivityType(DetectedActivity.IN_VEHICLE)
+//                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
+//                .build()
+//        activityTransitionList += ActivityTransition.Builder()
+//            .setActivityType(DetectedActivity.WALKING)
+//            .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+//            .build()
+//        activityTransitionList += ActivityTransition.Builder()
+//            .setActivityType(DetectedActivity.WALKING)
+//            .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
+//            .build()
+//        activityTransitionList += ActivityTransition.Builder()
+//            .setActivityType(DetectedActivity.STILL)
+//            .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
+//            .build()
+//        activityTransitionList += ActivityTransition.Builder()
+//            .setActivityType(DetectedActivity.STILL)
+//            .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+//            .build()
+//    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -87,8 +98,13 @@ class MainActivity : AppCompatActivity() {
 //                    .setAction("Action", null).show()
             sendFakeActivityTransitionEvent()
         }
+        binding.fabDbg.setOnClickListener { view ->
+            scheduleFakeActivityTransitionEvent()
+        }
 
-        if(isPermissionGranted()) {
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        if(isPermissionGranted()
+            && sharedPreferences.getBoolean("tracking_on", true)) {
             Toast.makeText(this@MainActivity, "Activity Tracking is enabled!",
                 Toast.LENGTH_SHORT).show()
             requestActivityTransitionUpdates(activityTransitionList)
@@ -103,7 +119,7 @@ class MainActivity : AppCompatActivity() {
             currentActivityTV.text = (getString(R.string.current_activity_preamble)
                     + timeParked.first.toString() + ":" + timeParked.second.toString())
         }
-        locationRepository.timeParked.observe(this, timeParkedObserver)
+        viewModel.parkingRepository.timeParked.observe(this, timeParkedObserver)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -125,7 +141,6 @@ class MainActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
-
 
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
@@ -155,6 +170,11 @@ class MainActivity : AppCompatActivity() {
     private fun sendFakeActivityTransitionEvent() {
         // name your intended recipient class
         val intent = Intent(this, TransitionsReceiver::class.java)
+            .setAction(Utils.ACTIVITY_TRANSITION_INTENT)
+//        val name = ComponentName(TransitionsReceiver::class.java.packageName,
+//            TransitionsReceiver::class.java.name)
+//        val intent = Intent()
+//            .setComponent(name)
         val events: ArrayList<ActivityTransitionEvent> = arrayListOf()
 
         // create fake events
@@ -165,7 +185,6 @@ class MainActivity : AppCompatActivity() {
                 SystemClock.elapsedRealtimeNanos()
             )
         )
-
         // finally, serialize and send
         val result = ActivityTransitionResult(events)
         SafeParcelableSerializer.serializeToIntentExtra(
@@ -177,12 +196,62 @@ class MainActivity : AppCompatActivity() {
         Log.d("FakeBroadcast", "Fake broadcast sent!" + intent.toString())
     }
 
-    private fun requestActivityTransitionUpdates(activityTransitionList: List<ActivityTransition>) {
+    private fun scheduleFakeActivityTransitionEvent() {
+        val am: AlarmManager? = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+//        val name = ComponentName(TransitionsReceiver::class.java.packageName,
+//                                 TransitionsReceiver::class.java.name)
+//        val intent = Intent(Utils.ACTIVITY_TRANSITION_INTENT)
+//            .setComponent(name)
         val intent = Intent(this, TransitionsReceiver::class.java)
+            .setAction(Utils.ACTIVITY_TRANSITION_INTENT)
+        val events: ArrayList<ActivityTransitionEvent> = arrayListOf()
+
+        // create fake events
+        events.add(
+            ActivityTransitionEvent(
+                DetectedActivity.IN_VEHICLE,
+                ActivityTransition.ACTIVITY_TRANSITION_EXIT,
+                SystemClock.elapsedRealtimeNanos()
+            )
+        )
+        // finally, serialize and send
+        val result = ActivityTransitionResult(events)
+        SafeParcelableSerializer.serializeToIntentExtra(
+            result,
+            intent,
+            "com.google.android.location.internal.EXTRA_ACTIVITY_TRANSITION_RESULT"
+        )
+        val pi = PendingIntent.getBroadcast(
+            this.applicationContext, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        Log.d("MainActivity", "Scheduling fake activity transition: $pi")
+        am!!.cancel(pi)
+
+        val cal: Calendar = Calendar.getInstance()
+        cal.add(Calendar.SECOND, 5)
+        if(!am.canScheduleExactAlarms()) {
+            Log.d("MainActivity", "Cannot schedule fake alarams")
+            startActivity(Intent(ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
+        } else {
+            am.setExact(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pi)
+            Log.d("FakeAlarmIntent", "Alarm manager: " + am.toString())
+        }
+
+    }
+
+    private fun requestActivityTransitionUpdates(activityTransitionList: List<ActivityTransition>) {
+//        val name = ComponentName(TransitionsReceiver::class.java.packageName,
+//            TransitionsReceiver::class.java.name)
+//        val intent = Intent(Utils.ACTIVITY_TRANSITION_INTENT)
+//            .setComponent(name)
+        val intent = Intent(this, TransitionsReceiver::class.java)
+            .setAction(Utils.ACTIVITY_TRANSITION_INTENT)
         val transitionsPendingIntent =
-            PendingIntent.getBroadcast(this@MainActivity,
+            PendingIntent.getBroadcast(this.applicationContext,
                 0, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
+                PendingIntent.FLAG_UPDATE_CURRENT or
+                        PendingIntent.FLAG_MUTABLE)
         val request = ActivityTransitionRequest(activityTransitionList)
         if (ActivityCompat.checkSelfPermission(
                 this,
