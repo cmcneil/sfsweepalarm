@@ -1,6 +1,5 @@
 package us.groundstate.sfsweepalert.maps
 
-import android.os.Debug
 import android.util.Log
 import com.firebase.geofire.GeoFireUtils
 import com.firebase.geofire.GeoLocation
@@ -18,8 +17,11 @@ import javax.inject.Singleton
 interface SFGeoClient {
     fun addSweepData(latlng: LatLng, googleMap: GoogleMap,
                      callback: (Map<String, List<Pair<Int, DocumentSnapshot>>>) -> Unit)
-    fun findClosest(latLng: LatLng, googleMap: GoogleMap,
-                    callback: (DocumentSnapshot?) -> Unit)
+
+    fun findClosest(
+        latLng: LatLng,
+        callback: (Pair<DocumentSnapshot?, DocumentSnapshot?>) -> Unit
+    )
 }
 
 @Singleton
@@ -70,8 +72,8 @@ class SFGeoClientImpl: SFGeoClient {
             }
     }
 
-    override fun findClosest(latLng: LatLng, googleMap: GoogleMap,
-                             callback: (DocumentSnapshot?) -> Unit) {
+    override fun findClosest(latLng: LatLng,
+                             callback: (Pair<DocumentSnapshot?, DocumentSnapshot?>) -> Unit) {
         val center = GeoLocation(latLng.latitude, latLng.longitude)
 
         val bounds = GeoFireUtils.getGeoHashQueryBounds(center, closeRadius)
@@ -87,27 +89,42 @@ class SFGeoClientImpl: SFGeoClient {
         val doneTask = Tasks.whenAllComplete(tasks)
             .addOnCompleteListener {
                 val matchingDocs: MutableList<DocumentSnapshot> = ArrayList()
-                val minDist: Double = closeRadius
+//                var minDist: Double = closeRadius
+                var closestDist: Double = closeRadius
 //                var closestDoc: Map<Int, DocumentSnapshot> = HashMap()
-                var closeCNN: Int? = null
-                val closestDocs = MutableList<DocumentSnapshot> = ArrayList()
+                var closeCNN: String? = null
+                var lsideDoc: DocumentSnapshot? = null
+                var rsideDoc: DocumentSnapshot? = null
+                var closestDocs: Map<String, DocumentSnapshot?> = mapOf(
+                    "L" to null,
+                    "R" to null
+                )
+//                val closestDocs = MutableList<DocumentSnapshot> = ArrayList()
 //                var lrClosestStreet: Pair<DocumentSnapshot?, DocumentSnapshot?> = Pair(null, null)
                 for (task in tasks) {
                     val snap = task.result
                     for (doc in snap!!.documents) {
                         val lat = doc.getDouble("avg_lat")!!
                         val lng = doc.getDouble("avg_lng")!!
-                        val cnn
+                        val cnn = doc.getString("cnn")!!
+                        val leftright = doc.getString("cnnrightleft")!!
 
-                        val avg_loc = GeoLocation(lat, lng)
-                        val distanceinM = GeoFireUtils.getDistanceBetween(avg_loc, center)
-                        if (distanceinM <= minDist) {
-                            if
-                            closestDoc = doc
+                        val avgLoc = GeoLocation(lat, lng)
+                        val distanceinM = GeoFireUtils.getDistanceBetween(avgLoc, center)
+                        if (distanceinM < closestDist) {
+                            closeCNN = cnn
+                            closestDist = distanceinM
+                        }
+                        if (cnn == closeCNN) {
+                            if (leftright == "L") {
+                                lsideDoc = doc
+                            } else if (leftright == "R") {
+                                rsideDoc = doc
+                            }
                         }
                     }
                 }
-                callback(closestDoc)
+                callback(Pair(lsideDoc, rsideDoc))
         }
     }
 //

@@ -7,13 +7,22 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.preference.PreferenceManager
+import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.firestore.DocumentSnapshot
 import dagger.hilt.android.AndroidEntryPoint
 import us.groundstate.sfsweepalert.R
+import us.groundstate.sfsweepalert.maps.SFGeoClient
+import javax.inject.Inject
 
 const val CHANNEL_ID = "100"
 
 @AndroidEntryPoint
 class AlertReceiver : BroadcastReceiver() {
+    @Inject
+    lateinit var parkingRepository: ParkingRepository
+
+    @Inject
+    lateinit var geoClient: SFGeoClient
 
     override fun onReceive(context: Context, intent: Intent) {
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
@@ -40,5 +49,14 @@ class AlertReceiver : BroadcastReceiver() {
             .setPriority(NotificationCompat.PRIORITY_MAX)
 
         notificationManager?.notify(100, builder.build())
+    }
+
+    fun getParkingInfo(context: Context) {
+        val loc: LatLng = parkingRepository.carLocation.value!!
+        geoClient.findClosest(loc, {lrSweep: Pair<DocumentSnapshot?, DocumentSnapshot?> ->
+            val leftDoc = lrSweep.first
+            val rightDoc = lrSweep.second
+            //TODO: Fill out
+        })
     }
 }
